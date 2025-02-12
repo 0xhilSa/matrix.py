@@ -63,7 +63,7 @@ import json
 import csv
 import os
 
-version = "0.8.2"
+version = "0.8.3"
 __mem__ = {}
 
 def from2d(
@@ -122,18 +122,20 @@ def arange(
         start:int,
         end:int,
         step:int=1,
+        dtype:Type=float,
         endpoint:bool=False,
         shape:Optional[Tuple[int,int]]=None,
         symbol:Optional[str]=None
     ):
     if endpoint: end += 1
-    if shape is None:  return Matrix([[x for x in range(start,end,step)]],symbol)
-    else: return Matrix([[x for x in range(start,end,step)]], symbol=symbol).reshape(shape)
+    if shape is None:  return Matrix([[x for x in range(start,end,step)]],dtype=dtype,symbol=symbol)
+    return Matrix([[x for x in range(start,end,step)]], dtype=dtype, symbol=symbol).reshape(shape)
 
 def linspace(
         start:int,
         end:int,
         num:int=50,
+        dtype:type=float,
         endpoint:bool=False,
         shape:Optional[Tuple[int,int]]=None,
         symbol:Optional[str]=None
@@ -144,21 +146,21 @@ def linspace(
     linspace_values = [start + step * i for i in range(num)]
     if not endpoint: linspace_values = linspace_values[:-1]
     if shape is None: return Matrix([linspace_values],symbol)
-    return Matrix([linspace_values], symbol=symbol).reshape(shape)
+    return Matrix([linspace_values], dtype=dtype, symbol=symbol).reshape(shape)
 
 def __res_dtype__(matrix:Matrix, other:Matrix):
-        if not isinstance(other, Matrix):
-            if matrix.dtype == "complex" or isinstance(other,complex): return complex
-            elif matrix.dtype == "bool" and isinstance(other,bool): return bool
-            elif (matrix.dtype == "int" and isinstance(other,float)) or (matrix.dtype == "float" and isinstance(other,int)): return float
-            elif (matrix.dtype == "bool" and isinstance(other,int)) or (matrix.dtype == "int" and isinstance(other,bool)): return int
-            else: return float
-        else:
-            if matrix.dtype == "complex" or other.dtype == "complex": return complex
-            elif matrix.dtype == "bool" and other.dtype == "bool": return bool
-            elif (matrix.dtype == "int" and other.dtype == "float") or (matrix.dtype == "float" and other.dtype == "int"): return float
-            elif (matrix.dtype == "bool" and other.dtype == "int") or (matrix.dtype == "int" and other.dtype == "bool"): return int
-            else: return float
+    if not isinstance(other, Matrix):
+        if matrix.dtype == "complex" or isinstance(other,complex): return complex
+        elif matrix.dtype == "bool" and isinstance(other,bool): return bool
+        elif (matrix.dtype == "int" and isinstance(other,float)) or (matrix.dtype == "float" and isinstance(other,int)): return float
+        elif (matrix.dtype == "bool" and isinstance(other,int)) or (matrix.dtype == "int" and isinstance(other,bool)): return int
+        else: return float
+    else:
+        if matrix.dtype == "complex" or other.dtype == "complex": return complex
+        elif matrix.dtype == "bool" and other.dtype == "bool": return bool
+        elif (matrix.dtype == "int" and other.dtype == "float") or (matrix.dtype == "float" and other.dtype == "int"): return float
+        elif (matrix.dtype == "bool" and other.dtype == "int") or (matrix.dtype == "int" and other.dtype == "bool"): return int
+        else: return float
 
 def __res_dtype_self__(matrix:Matrix):
     if matrix.dtype == "int": return int
@@ -874,7 +876,7 @@ class Matrix:
         if symbol is not None and symbol in globals().get("__mem__",{}) and overwrite is False: raise KeyError(f"Symbol '{symbol}' already exists! Try a different symbol.")
 
     def __res_dtype__(self, other):
-        if not isinstance(other, Matrix):
+        if isinstance(other, Matrix):
             if self.__dtype == complex or other.__dtype == complex: return complex
             elif self.__dtype == bool and other.__dtype == bool: return bool
             elif (self.__dtype == int and other.__dtype == float) or (self.__dtype == float and other.__dtype == int): return float
